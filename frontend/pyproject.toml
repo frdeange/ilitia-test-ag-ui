@@ -1,0 +1,22 @@
+[project]
+name = "recipe-app-frontend"
+version = "0.1.0"
+description = "Reflex frontend for interactive recipes with AG-UI protocol"
+requires-python = ">=3.11"
+dependencies = [
+    "reflex>=0.8.22",
+    "httpx>=0.28.1",
+    "python-dotenv>=1.2.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["recipe_app"]
