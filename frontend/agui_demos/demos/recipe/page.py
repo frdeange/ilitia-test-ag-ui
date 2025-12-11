@@ -11,15 +11,54 @@ from .components import recipe_form, floating_chat
 from ...shared import sidebar
 
 
+def reset_button() -> rx.Component:
+    """Button to reset recipe to default"""
+    return rx.cond(
+        RecipeState.has_recipe,
+        rx.button(
+            rx.hstack(
+                rx.icon("rotate-ccw", size=14),
+                rx.text("Nueva Receta"),
+                spacing="2",
+            ),
+            variant="outline",
+            color_scheme="gray",
+            size="1",
+            cursor="pointer",
+            on_click=RecipeState.reset_recipe,
+        ),
+        rx.fragment(),
+    )
+
+
 def main_content() -> rx.Component:
     """Main content area with the recipe form"""
     return rx.box(
         rx.center(
-            recipe_form(),
+            rx.vstack(
+                # Header with reset button
+                rx.hstack(
+                    rx.text(
+                        "Demo: Asistente de Recetas IA",
+                        font_size="0.9rem",
+                        color="#666",
+                    ),
+                    rx.spacer(),
+                    reset_button(),
+                    width="100%",
+                    align="center",
+                    margin_bottom="0.5rem",
+                ),
+                
+                # Recipe form
+                recipe_form(),
+                
+                spacing="2",
+                width="100%",
+                max_width="800px",
+                padding="2rem",
+            ),
             width="100%",
-            max_width="800px",
-            padding="2rem",
-            padding_top="2rem",
         ),
         width="100%",
         min_height="100vh",

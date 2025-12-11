@@ -170,12 +170,12 @@ def chat_panel() -> rx.Component:
                 align="center",
             ),
             
-            # Welcome message
+            # Dynamic welcome message
             rx.box(
                 rx.hstack(
-                    rx.text("Hola 👋", font_size="0.85rem"),
+                    rx.text(RecipeState.welcome_emoji, font_size="0.85rem"),
                     rx.text(
-                        "¿Cómo puedo ayudarte con tu receta?",
+                        RecipeState.welcome_message,
                         font_size="0.85rem",
                         color="#666",
                     ),

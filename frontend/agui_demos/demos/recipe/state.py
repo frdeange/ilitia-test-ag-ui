@@ -153,6 +153,35 @@ class RecipeState(rx.State):
         """Clear the error message"""
         self.error_message = ""
     
+    def reset_recipe(self):
+        """Reset to empty recipe and clear chat"""
+        self.recipe = Recipe()
+        self.messages = []
+        self.current_input = ""
+        self._last_recipe_hash = ""
+    
+    @rx.var
+    def welcome_message(self) -> str:
+        """Dynamic welcome message based on recipe state"""
+        if self.recipe.title:
+            return f"Estoy trabajando en: {self.recipe.title}"
+        return "¿Qué quieres cocinar hoy?"
+    
+    @rx.var
+    def welcome_emoji(self) -> str:
+        """Dynamic emoji based on recipe preferences"""
+        if "Vegetariano" in self.recipe.special_preferences:
+            return "🥗"
+        if "Vegano" in self.recipe.special_preferences:
+            return "🌱"
+        if "Picante" in self.recipe.special_preferences:
+            return "🌶️"
+        if "Alta Proteína" in self.recipe.special_preferences:
+            return "💪"
+        if self.recipe.title:
+            return "👨‍🍳"
+        return "👋"
+    
     def toggle_chat(self):
         """Toggle the floating chat panel open/closed"""
         self.chat_open = not self.chat_open
@@ -387,6 +416,9 @@ class RecipeState(rx.State):
                 thread_id=self.thread_id,
                 state=current_state
             ):
+                # Debug logging
+                print(f"🍳 Recipe Event: {event.type} - Data keys: {list(event.data.keys()) if event.data else 'None'}")
+                
                 # Handle different event types
                 if event.type == AGUIEventType.RUN_STARTED:
                     self.is_loading = True
@@ -395,15 +427,19 @@ class RecipeState(rx.State):
                 elif event.type == AGUIEventType.TEXT_MESSAGE_START:
                     self.is_streaming = True
                     self.current_streaming_content = ""
+                    print(f"🍳 TEXT_MESSAGE_START received")
                     yield
                 
                 elif event.type == AGUIEventType.TEXT_MESSAGE_CONTENT:
-                    content = event.data.get("content", "")
+                    # Handle both 'delta' and 'content' keys (different AG-UI implementations)
+                    content = event.data.get("delta", event.data.get("content", ""))
                     self.current_streaming_content += content
+                    print(f"🍳 TEXT_MESSAGE_CONTENT: '{content[:50]}...' (total: {len(self.current_streaming_content)})")
                     yield
                 
                 elif event.type == AGUIEventType.TEXT_MESSAGE_END:
                     # Add completed message to chat
+                    print(f"🍳 TEXT_MESSAGE_END - streaming content: '{self.current_streaming_content[:100] if self.current_streaming_content else 'EMPTY'}...'")
                     if self.current_streaming_content:
                         self.messages = self.messages + [
                             ChatMessage(
@@ -411,6 +447,9 @@ class RecipeState(rx.State):
                                 content=self.current_streaming_content
                             )
                         ]
+                        print(f"🍳 Added message to chat. Total messages: {len(self.messages)}")
+                    else:
+                        print(f"🍳 WARNING: No streaming content to add!")
                     self.is_streaming = False
                     self.current_streaming_content = ""
                     yield
@@ -427,8 +466,6 @@ class RecipeState(rx.State):
                         import json
                         content_hash = json.dumps(recipe_data, sort_keys=True)
                         is_recipe_changed = content_hash != self._last_recipe_hash
-                        
-                        old_title = self.recipe.title
                         
                         # Update recipe state
                         self.recipe = Recipe(
@@ -447,22 +484,9 @@ class RecipeState(rx.State):
                             instructions=recipe_data.get("instructions", []),
                         )
                         
-                        # Add message if recipe content changed
+                        # Track recipe changes (but don't add automatic message - the agent sends its own)
                         if is_recipe_changed:
                             self._last_recipe_hash = content_hash
-                            num_ingredients = len(recipe_data.get("ingredients", []))
-                            num_steps = len(recipe_data.get("instructions", []))
-                            
-                            if old_title and old_title != new_title:
-                                summary = f"He actualizado la receta a **{new_title}** con {num_ingredients} ingredientes y {num_steps} pasos."
-                            elif old_title:
-                                summary = f"He modificado **{new_title}**. Ahora tiene {num_ingredients} ingredientes y {num_steps} pasos."
-                            else:
-                                summary = f"¡Listo! He creado **{new_title}** con {num_ingredients} ingredientes y {num_steps} pasos."
-                            
-                            self.messages = self.messages + [
-                                ChatMessage(role="assistant", content=summary)
-                            ]
                     yield
                 
                 elif event.type == AGUIEventType.STATE_DELTA:
