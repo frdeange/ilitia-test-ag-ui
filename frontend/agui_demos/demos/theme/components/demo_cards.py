@@ -2,6 +2,7 @@
 Demo Cards Component
 
 Sample cards to demonstrate theme changes for Ilitia.
+Now with dynamic emojis and background images.
 """
 
 import reflex as rx
@@ -10,11 +11,33 @@ from ..state import ThemeState
 
 
 def hero_section() -> rx.Component:
-    """Hero section with Ilitia branding"""
+    """Hero section with Ilitia branding and dynamic visuals"""
     return rx.box(
+        # Background image overlay (if set)
+        rx.cond(
+            ThemeState.theme.background_image != "",
+            rx.box(
+                position="absolute",
+                top="0",
+                left="0",
+                right="0",
+                bottom="0",
+                background_image=f"url({ThemeState.theme.background_image})",
+                background_size="cover",
+                background_position="center",
+                opacity="0.3",
+                border_radius="1rem",
+            ),
+            rx.fragment(),
+        ),
         rx.vstack(
+            # Dynamic hero emoji
+            rx.text(
+                ThemeState.theme.hero_emoji,
+                font_size="4rem",
+                class_name="hero-emoji",
+            ),
             rx.hstack(
-                rx.icon("sparkles", size=40, color="white"),
                 rx.text(
                     "Ilitia",
                     font_size="2.5rem",
@@ -40,20 +63,25 @@ def hero_section() -> rx.Component:
             spacing="3",
             align="center",
             padding="3rem",
+            position="relative",
+            z_index="1",
         ),
         background=ThemeState.gradient_style,
         border_radius="1rem",
         width="100%",
         box_shadow="0 10px 40px rgba(0,0,0,0.15)",
+        position="relative",
+        overflow="hidden",
+        style={"transition": "all 0.5s ease"},
     )
 
 
-def service_card(icon: str, title: str, description: str) -> rx.Component:
-    """A service card component"""
+def service_card(emoji: str, title: str, description: str) -> rx.Component:
+    """A service card component with dynamic emoji"""
     return rx.box(
         rx.vstack(
             rx.box(
-                rx.icon(icon, size=28, color="white"),
+                rx.text(emoji, font_size="2rem"),
                 padding="1rem",
                 border_radius="0.75rem",
                 background=ThemeState.gradient_style,
@@ -114,6 +142,7 @@ def stat_card(value: str, label: str) -> rx.Component:
         box_shadow="0 4px 20px rgba(0,0,0,0.08)",
         flex="1",
         min_width="150px",
+        style={"transition": "all 0.3s ease"},
     )
 
 
@@ -121,7 +150,7 @@ def testimonial_card(quote: str, author: str, role: str) -> rx.Component:
     """A testimonial card"""
     return rx.box(
         rx.vstack(
-            rx.icon("quote", size=24, color=ThemeState.theme.primary_color),
+            rx.text(ThemeState.theme.hero_emoji, font_size="1.5rem"),
             rx.text(
                 quote,
                 font_size="0.95rem",
@@ -153,8 +182,10 @@ def testimonial_card(quote: str, author: str, role: str) -> rx.Component:
         background=ThemeState.theme.card_background,
         border_radius="1rem",
         box_shadow="0 4px 20px rgba(0,0,0,0.08)",
-        border_left=f"4px solid {ThemeState.theme.primary_color}",
+        border_left=f"4px solid",
+        border_left_color=ThemeState.theme.primary_color,
         width="100%",
+        style={"transition": "all 0.3s ease"},
     )
 
 
@@ -162,6 +193,7 @@ def cta_button() -> rx.Component:
     """Call to action button"""
     return rx.button(
         rx.hstack(
+            rx.text(ThemeState.theme.hero_emoji),
             rx.text("Comenzar Ahora"),
             rx.icon("arrow-right", size=18),
             spacing="2",
@@ -184,7 +216,7 @@ def demo_cards() -> rx.Component:
         # Hero Section
         hero_section(),
         
-        # Services Section
+        # Services Section with dynamic emojis
         rx.box(
             rx.text(
                 "Nuestros Servicios",
@@ -195,17 +227,17 @@ def demo_cards() -> rx.Component:
             ),
             rx.flex(
                 service_card(
-                    "brain",
+                    ThemeState.theme.service_emojis[0],
                     "Inteligencia Artificial",
                     "Soluciones de IA personalizadas para tu negocio",
                 ),
                 service_card(
-                    "code",
+                    ThemeState.theme.service_emojis[1],
                     "Desarrollo Software",
                     "Aplicaciones modernas con las últimas tecnologías",
                 ),
                 service_card(
-                    "users",
+                    ThemeState.theme.service_emojis[2],
                     "Consultoría",
                     "Asesoramiento experto para tu transformación digital",
                 ),

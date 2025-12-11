@@ -32,6 +32,11 @@ class Theme(BaseModel):
     font_family: str = "Inter"
     mood: str = "Corporativo - Ilitia"
     description: str = "Tema por defecto con los colores corporativos de Ilitia"
+    # New visual elements
+    hero_emoji: str = "✨"  # Main emoji for the hero section
+    service_emojis: list[str] = ["🧠", "💻", "👥"]  # Emojis for service cards
+    background_image: str = ""  # URL for background image (empty = no image)
+    hero_pattern: str = "none"  # Pattern style: none, dots, waves, geometric
 
 
 class ThemeChatMessage(BaseModel):
@@ -201,7 +206,7 @@ class ThemeState(rx.State):
                             old_mood = self.theme.mood
                             self._last_theme_hash = current_hash
                             
-                            # Update theme
+                            # Update theme with all fields including new visual elements
                             self.theme = Theme(
                                 primary_color=theme_data.get("primary_color", self.theme.primary_color),
                                 secondary_color=theme_data.get("secondary_color", self.theme.secondary_color),
@@ -212,6 +217,10 @@ class ThemeState(rx.State):
                                 font_family=theme_data.get("font_family", self.theme.font_family),
                                 mood=theme_data.get("mood", self.theme.mood),
                                 description=theme_data.get("description", self.theme.description),
+                                hero_emoji=theme_data.get("hero_emoji", self.theme.hero_emoji),
+                                service_emojis=theme_data.get("service_emojis", self.theme.service_emojis),
+                                background_image=theme_data.get("background_image", self.theme.background_image),
+                                hero_pattern=theme_data.get("hero_pattern", self.theme.hero_pattern),
                             )
                     yield
                     
