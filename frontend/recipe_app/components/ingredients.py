@@ -15,8 +15,9 @@ def ingredient_badge(ingredient: Ingredient) -> rx.Component:
     """
     return rx.badge(
         rx.hstack(
+            rx.text(ingredient.icon, font_size="0.9rem"),
             rx.text(
-                f"{ingredient.quantity}{ingredient.unit}",
+                ingredient.amount,
                 font_weight="bold",
                 font_size="0.75rem",
             ),
@@ -95,8 +96,9 @@ def ingredient_checklist() -> rx.Component:
                             rx.checkbox(
                                 size="2",
                             ),
+                            rx.text(ing.icon, font_size="1rem"),
                             rx.text(
-                                f"{ing.quantity} {ing.unit} de {ing.name}",
+                                f"{ing.amount} {ing.name}",
                                 font_size="0.9rem",
                             ),
                             spacing="2",

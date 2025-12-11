@@ -10,27 +10,33 @@ from ..state import RecipeState
 
 
 def time_badge(label: str, time: str) -> rx.Component:
-    """A badge showing prep/cook time"""
-    return rx.cond(
-        time != "",
-        rx.hstack(
-            rx.icon("clock", size=16, color="orange"),
-            rx.text(label, font_weight="bold", font_size="0.8rem"),
-            rx.text(time, font_size="0.8rem", color="gray"),
-            spacing="1",
-            align="center",
-        ),
-        rx.fragment(),
+    """A badge showing cooking time"""
+    return rx.hstack(
+        rx.icon("clock", size=16, color="orange"),
+        rx.text(label, font_weight="bold", font_size="0.8rem"),
+        rx.text(time, font_size="0.8rem", color="gray"),
+        spacing="1",
+        align="center",
     )
 
 
-def servings_badge(servings: int) -> rx.Component:
-    """A badge showing number of servings"""
+def skill_badge(skill_level: str) -> rx.Component:
+    """A badge showing skill level"""
     return rx.hstack(
-        rx.icon("users", size=16, color="blue"),
-        rx.text(f"{servings} porciones", font_size="0.8rem", color="gray"),
+        rx.icon("chef-hat", size=16, color="purple"),
+        rx.text(skill_level, font_size="0.8rem", color="gray"),
         spacing="1",
         align="center",
+    )
+
+
+def preference_badge(preference: str) -> rx.Component:
+    """A badge for dietary preferences"""
+    return rx.badge(
+        preference,
+        color_scheme="green",
+        variant="soft",
+        radius="full",
     )
 
 
@@ -69,7 +75,7 @@ def recipe_card() -> rx.Component:
         RecipeState.has_recipe,
         rx.card(
             rx.vstack(
-                # Header with title and description
+                # Header with title
                 rx.box(
                     rx.heading(
                         RecipeState.recipe.title,
@@ -78,24 +84,31 @@ def recipe_card() -> rx.Component:
                         background_clip="text",
                         style={"-webkit-background-clip": "text", "-webkit-text-fill-color": "transparent"},
                     ),
-                    rx.text(
-                        RecipeState.recipe.description,
-                        color="gray",
-                        margin_top="0.5rem",
-                        font_size="1rem",
-                        line_height="1.6",
-                    ),
                     width="100%",
                 ),
                 
-                # Time and servings badges
+                # Time, skill level and preferences badges
                 rx.hstack(
-                    time_badge("Prep:", RecipeState.recipe.prep_time),
-                    time_badge("Cocción:", RecipeState.recipe.cook_time),
-                    servings_badge(RecipeState.recipe.servings),
+                    time_badge("Tiempo:", RecipeState.recipe.cooking_time),
+                    skill_badge(RecipeState.recipe.skill_level),
                     spacing="4",
                     flex_wrap="wrap",
-                    margin_y="1rem",
+                    margin_y="0.5rem",
+                ),
+                
+                # Special preferences
+                rx.cond(
+                    RecipeState.recipe.special_preferences.length() > 0,
+                    rx.flex(
+                        rx.foreach(
+                            RecipeState.recipe.special_preferences,
+                            preference_badge,
+                        ),
+                        gap="0.5rem",
+                        flex_wrap="wrap",
+                        margin_bottom="0.5rem",
+                    ),
+                    rx.fragment(),
                 ),
                 
                 rx.divider(margin_y="0.5rem"),
@@ -112,9 +125,9 @@ def recipe_card() -> rx.Component:
                         rx.foreach(
                             RecipeState.recipe.ingredients,
                             lambda ing: rx.hstack(
-                                rx.icon("check", size=14, color="green"),
+                                rx.text(ing.icon, font_size="1.2rem"),
                                 rx.text(
-                                    f"{ing.quantity} {ing.unit} ",
+                                    ing.amount,
                                     font_weight="bold",
                                     display="inline",
                                 ),

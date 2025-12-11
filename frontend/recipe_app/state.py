@@ -20,21 +20,20 @@ load_dotenv()
 
 
 class Ingredient(BaseModel):
-    """Ingredient model for recipes"""
+    """Ingredient model for recipes (Agent Framework schema)"""
+    icon: str = "🍽️"
     name: str = ""
-    quantity: str = ""
-    unit: str = ""
+    amount: str = ""
 
 
 class Recipe(BaseModel):
-    """Recipe model"""
+    """Recipe model (Agent Framework schema)"""
     title: str = ""
-    description: str = ""
+    skill_level: str = "Beginner"  # Beginner, Intermediate, Advanced
+    special_preferences: list[str] = []
+    cooking_time: str = "30 min"  # 5 min, 15 min, 30 min, 45 min, 60+ min
     ingredients: list[Ingredient] = []
     instructions: list[str] = []
-    prep_time: str = ""
-    cook_time: str = ""
-    servings: int = 4
 
 
 class ChatMessage(BaseModel):
@@ -207,19 +206,18 @@ class RecipeState(rx.State):
                     if recipe_data.get("title"):
                         self.recipe = Recipe(
                             title=recipe_data.get("title", ""),
-                            description=recipe_data.get("description", ""),
+                            skill_level=recipe_data.get("skill_level", "Beginner"),
+                            special_preferences=recipe_data.get("special_preferences", []),
+                            cooking_time=recipe_data.get("cooking_time", "30 min"),
                             ingredients=[
                                 Ingredient(
+                                    icon=ing.get("icon", "🍽️"),
                                     name=ing.get("name", ""),
-                                    quantity=ing.get("quantity", ""),
-                                    unit=ing.get("unit", "")
+                                    amount=ing.get("amount", "")
                                 )
                                 for ing in recipe_data.get("ingredients", [])
                             ],
                             instructions=recipe_data.get("instructions", []),
-                            prep_time=recipe_data.get("prep_time", ""),
-                            cook_time=recipe_data.get("cook_time", ""),
-                            servings=recipe_data.get("servings", 4)
                         )
                     yield
                 
@@ -232,19 +230,18 @@ class RecipeState(rx.State):
                             if recipe_data:
                                 self.recipe = Recipe(
                                     title=recipe_data.get("title", ""),
-                                    description=recipe_data.get("description", ""),
+                                    skill_level=recipe_data.get("skill_level", "Beginner"),
+                                    special_preferences=recipe_data.get("special_preferences", []),
+                                    cooking_time=recipe_data.get("cooking_time", "30 min"),
                                     ingredients=[
                                         Ingredient(
+                                            icon=ing.get("icon", "🍽️"),
                                             name=ing.get("name", ""),
-                                            quantity=ing.get("quantity", ""),
-                                            unit=ing.get("unit", "")
+                                            amount=ing.get("amount", "")
                                         )
                                         for ing in recipe_data.get("ingredients", [])
                                     ],
                                     instructions=recipe_data.get("instructions", []),
-                                    prep_time=recipe_data.get("prep_time", ""),
-                                    cook_time=recipe_data.get("cook_time", ""),
-                                    servings=recipe_data.get("servings", 4)
                                 )
                     yield
                 
