@@ -73,6 +73,7 @@ class RecipeState(rx.State):
     
     # Recipe state (from AG-UI STATE_SNAPSHOT/STATE_DELTA)
     recipe: Recipe = Recipe()
+    _last_recipe_hash: str = ""  # Track content hash to detect recipe changes
     
     # UI state
     is_loading: bool = False
@@ -103,6 +104,35 @@ class RecipeState(rx.State):
     def ingredient_count(self) -> int:
         """Number of ingredients in current recipe"""
         return len(self.recipe.ingredients)
+    
+    # Computed vars for each dietary preference to avoid React hooks issues
+    @rx.var
+    def pref_alta_proteina(self) -> bool:
+        return "Alta Proteína" in self.recipe.special_preferences
+    
+    @rx.var
+    def pref_bajo_carbohidratos(self) -> bool:
+        return "Bajo en Carbohidratos" in self.recipe.special_preferences
+    
+    @rx.var
+    def pref_picante(self) -> bool:
+        return "Picante" in self.recipe.special_preferences
+    
+    @rx.var
+    def pref_economico(self) -> bool:
+        return "Económico" in self.recipe.special_preferences
+    
+    @rx.var
+    def pref_un_solo_plato(self) -> bool:
+        return "Un Solo Plato" in self.recipe.special_preferences
+    
+    @rx.var
+    def pref_vegetariano(self) -> bool:
+        return "Vegetariano" in self.recipe.special_preferences
+    
+    @rx.var
+    def pref_vegano(self) -> bool:
+        return "Vegano" in self.recipe.special_preferences
     
     def set_input(self, value: str):
         """Update the current input value"""
@@ -183,6 +213,21 @@ class RecipeState(rx.State):
             ingredients=new_ingredients,
             instructions=self.recipe.instructions,
         )
+    
+    def remove_ingredient(self, index: int):
+        """Remove an ingredient at a specific index"""
+        new_ingredients = list(self.recipe.ingredients)
+        if 0 <= index < len(new_ingredients):
+            new_ingredients.pop(index)
+            
+            self.recipe = Recipe(
+                title=self.recipe.title,
+                skill_level=self.recipe.skill_level,
+                special_preferences=self.recipe.special_preferences,
+                cooking_time=self.recipe.cooking_time,
+                ingredients=new_ingredients,
+                instructions=self.recipe.instructions,
+            )
     
     def add_empty_instruction(self):
         """Add an empty instruction step"""
@@ -372,13 +417,20 @@ class RecipeState(rx.State):
                 
                 elif event.type == AGUIEventType.STATE_SNAPSHOT:
                     # Update recipe from state snapshot
-                    state_data = event.data.get("state", {})
+                    # Note: The backend sends "snapshot" not "state"
+                    state_data = event.data.get("snapshot", event.data.get("state", {}))
                     recipe_data = state_data.get("recipe", {})
                     
-                    if recipe_data.get("title"):
-                        old_title = self.recipe.title
-                        new_title = recipe_data.get("title", "")
+                    new_title = recipe_data.get("title", "")
+                    if new_title:
+                        # Create hash of recipe content to detect any changes
+                        import json
+                        content_hash = json.dumps(recipe_data, sort_keys=True)
+                        is_recipe_changed = content_hash != self._last_recipe_hash
                         
+                        old_title = self.recipe.title
+                        
+                        # Update recipe state
                         self.recipe = Recipe(
                             title=new_title,
                             skill_level=_map_skill_level(recipe_data.get("skill_level", "Intermediate")),
@@ -395,34 +447,33 @@ class RecipeState(rx.State):
                             instructions=recipe_data.get("instructions", []),
                         )
                         
-                        # Add summary message to chat
-                        num_ingredients = len(recipe_data.get("ingredients", []))
-                        num_instructions = len(recipe_data.get("instructions", []))
-                        
-                        if old_title and old_title != new_title:
-                            summary = f"He actualizado la receta a **{new_title}** con {num_ingredients} ingredientes y {num_instructions} pasos."
-                        elif old_title:
-                            summary = f"He mejorado la receta **{new_title}**. Ahora tiene {num_ingredients} ingredientes y {num_instructions} pasos."
-                        else:
-                            summary = f"He creado la receta **{new_title}** con {num_ingredients} ingredientes y {num_instructions} pasos."
-                        
-                        self.messages = self.messages + [
-                            ChatMessage(role="assistant", content=summary)
-                        ]
+                        # Add message if recipe content changed
+                        if is_recipe_changed:
+                            self._last_recipe_hash = content_hash
+                            num_ingredients = len(recipe_data.get("ingredients", []))
+                            num_steps = len(recipe_data.get("instructions", []))
+                            
+                            if old_title and old_title != new_title:
+                                summary = f"He actualizado la receta a **{new_title}** con {num_ingredients} ingredientes y {num_steps} pasos."
+                            elif old_title:
+                                summary = f"He modificado **{new_title}**. Ahora tiene {num_ingredients} ingredientes y {num_steps} pasos."
+                            else:
+                                summary = f"¡Listo! He creado **{new_title}** con {num_ingredients} ingredientes y {num_steps} pasos."
+                            
+                            self.messages = self.messages + [
+                                ChatMessage(role="assistant", content=summary)
+                            ]
                     yield
                 
                 elif event.type == AGUIEventType.STATE_DELTA:
-                    # Handle incremental state updates
+                    # Handle incremental state updates (update recipe but don't add message - STATE_SNAPSHOT handles that)
                     delta = event.data.get("delta", [])
                     for op in delta:
                         if op.get("path") == "/recipe":
                             recipe_data = op.get("value", {})
                             if recipe_data:
-                                old_title = self.recipe.title
-                                new_title = recipe_data.get("title", "")
-                                
                                 self.recipe = Recipe(
-                                    title=new_title,
+                                    title=recipe_data.get("title", ""),
                                     skill_level=_map_skill_level(recipe_data.get("skill_level", "Intermediate")),
                                     special_preferences=recipe_data.get("special_preferences", []),
                                     cooking_time=recipe_data.get("cooking_time", "30 min"),
@@ -436,21 +487,6 @@ class RecipeState(rx.State):
                                     ],
                                     instructions=recipe_data.get("instructions", []),
                                 )
-                                
-                                # Add summary message to chat
-                                num_ingredients = len(recipe_data.get("ingredients", []))
-                                num_instructions = len(recipe_data.get("instructions", []))
-                                
-                                if old_title and old_title != new_title:
-                                    summary = f"He actualizado la receta a **{new_title}** con {num_ingredients} ingredientes y {num_instructions} pasos."
-                                elif old_title:
-                                    summary = f"He mejorado la receta **{new_title}**. Ahora tiene {num_ingredients} ingredientes y {num_instructions} pasos."
-                                else:
-                                    summary = f"He creado la receta **{new_title}** con {num_ingredients} ingredientes y {num_instructions} pasos."
-                                
-                                self.messages = self.messages + [
-                                    ChatMessage(role="assistant", content=summary)
-                                ]
                     yield
                 
                 elif event.type == AGUIEventType.TOOL_CALL_START:
@@ -492,19 +528,20 @@ class RecipeState(rx.State):
         """
         Send the current recipe state to the agent for improvement.
         
-        The state is sent in the request payload, and the agent reads it
-        from the context. We just send a simple message asking for improvement.
+        The state is sent in the request payload via AG-UI protocol.
+        We just send a simple message - the agent reads the actual state from the payload.
         """
-        # Simple message - the agent reads the state from the request
-        message = "Mejora esta receta"
-        
-        # If we have a recipe title, be more specific
+        # Simple messages - AG-UI sends the actual state in the payload
         if self.recipe.title:
-            message = f"Mejora la receta de {self.recipe.title}"
+            message = "Mejora esta receta"
+        elif self.recipe.ingredients:
+            message = "Crea una receta con estos ingredientes"
+        else:
+            message = "Sugiere una receta"
         
         # Set as current input and send
         self.current_input = message
         
-        # Call send_message (which will send the state in the payload)
+        # Call send_message (which will send the full state in the payload)
         async for _ in self.send_message():
             yield

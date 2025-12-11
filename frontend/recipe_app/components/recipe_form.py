@@ -67,43 +67,43 @@ def dietary_preferences() -> rx.Component:
         rx.hstack(
             rx.checkbox(
                 "Alta Proteína",
-                checked=RecipeState.recipe.special_preferences.contains("Alta Proteína"),
+                checked=RecipeState.pref_alta_proteina,
                 on_change=RecipeState.toggle_preference("Alta Proteína"),
                 size="2",
             ),
             rx.checkbox(
                 "Bajo en Carbohidratos",
-                checked=RecipeState.recipe.special_preferences.contains("Bajo en Carbohidratos"),
+                checked=RecipeState.pref_bajo_carbohidratos,
                 on_change=RecipeState.toggle_preference("Bajo en Carbohidratos"),
                 size="2",
             ),
             rx.checkbox(
                 "Picante",
-                checked=RecipeState.recipe.special_preferences.contains("Picante"),
+                checked=RecipeState.pref_picante,
                 on_change=RecipeState.toggle_preference("Picante"),
                 size="2",
             ),
             rx.checkbox(
                 "Económico",
-                checked=RecipeState.recipe.special_preferences.contains("Económico"),
+                checked=RecipeState.pref_economico,
                 on_change=RecipeState.toggle_preference("Económico"),
                 size="2",
             ),
             rx.checkbox(
                 "Un Solo Plato",
-                checked=RecipeState.recipe.special_preferences.contains("Un Solo Plato"),
+                checked=RecipeState.pref_un_solo_plato,
                 on_change=RecipeState.toggle_preference("Un Solo Plato"),
                 size="2",
             ),
             rx.checkbox(
                 "Vegetariano",
-                checked=RecipeState.recipe.special_preferences.contains("Vegetariano"),
+                checked=RecipeState.pref_vegetariano,
                 on_change=RecipeState.toggle_preference("Vegetariano"),
                 size="2",
             ),
             rx.checkbox(
                 "Vegano",
-                checked=RecipeState.recipe.special_preferences.contains("Vegano"),
+                checked=RecipeState.pref_vegano,
                 on_change=RecipeState.toggle_preference("Vegano"),
                 size="2",
             ),
@@ -115,8 +115,21 @@ def dietary_preferences() -> rx.Component:
 
 
 def ingredient_card(ingredient: Ingredient, index: int) -> rx.Component:
-    """A single ingredient card - editable"""
+    """A single ingredient card - editable with delete button"""
     return rx.box(
+        # Delete button in top-right corner
+        rx.icon_button(
+            rx.icon("x", size=12),
+            size="1",
+            variant="ghost",
+            color_scheme="gray",
+            position="absolute",
+            top="4px",
+            right="4px",
+            cursor="pointer",
+            on_click=lambda: RecipeState.remove_ingredient(index),
+            _hover={"background": "#fee2e2", "color": "#dc2626"},
+        ),
         rx.hstack(
             rx.text(ingredient.icon, font_size="1.5rem"),
             rx.vstack(
@@ -147,12 +160,15 @@ def ingredient_card(ingredient: Ingredient, index: int) -> rx.Component:
             width="100%",
         ),
         padding="0.75rem",
+        padding_top="1.5rem",  # Extra space for delete button
         background="#f9f9f9",
         border_radius="0.5rem",
         border="1px solid #eee",
         min_width="180px",
         max_width="200px",
+        position="relative",  # For absolute positioning of delete button
         class_name="ingredient-card",
+        _hover={"border_color": "#ddd"},
     )
 
 
