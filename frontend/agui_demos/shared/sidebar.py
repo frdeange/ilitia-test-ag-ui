@@ -7,46 +7,54 @@ A sidebar showing available demos in the application.
 import reflex as rx
 
 
-def demo_item(title: str, description: str, icon: str, is_active: bool = False) -> rx.Component:
+def demo_item(title: str, description: str, icon: str, href: str, is_active: bool = False) -> rx.Component:
     """A single demo item in the sidebar"""
-    return rx.box(
-        rx.hstack(
-            rx.icon(icon, size=18, color="#667eea" if is_active else "#666"),
-            rx.vstack(
-                rx.text(
-                    title,
-                    font_weight="600" if is_active else "500",
-                    font_size="0.9rem",
-                    color="#333" if is_active else "#666",
+    return rx.link(
+        rx.box(
+            rx.hstack(
+                rx.icon(icon, size=18, color="#667eea" if is_active else "#666"),
+                rx.vstack(
+                    rx.text(
+                        title,
+                        font_weight="600" if is_active else "500",
+                        font_size="0.9rem",
+                        color="#333" if is_active else "#666",
+                    ),
+                    rx.text(
+                        description,
+                        font_size="0.75rem",
+                        color="#999",
+                        line_height="1.3",
+                    ),
+                    spacing="0",
+                    align="start",
                 ),
-                rx.text(
-                    description,
-                    font_size="0.75rem",
-                    color="#999",
-                    line_height="1.3",
-                ),
-                spacing="0",
+                spacing="3",
                 align="start",
+                width="100%",
             ),
-            spacing="3",
-            align="start",
+            padding="0.75rem",
+            border_radius="0.5rem",
+            background="rgba(102, 126, 234, 0.1)" if is_active else "transparent",
+            border_left=f"3px solid {'#667eea' if is_active else 'transparent'}",
+            cursor="pointer",
+            _hover={
+                "background": "rgba(102, 126, 234, 0.05)" if not is_active else "rgba(102, 126, 234, 0.1)",
+            },
             width="100%",
         ),
-        padding="0.75rem",
-        border_radius="0.5rem",
-        background="rgba(102, 126, 234, 0.1)" if is_active else "transparent",
-        border_left=f"3px solid {'#667eea' if is_active else 'transparent'}",
-        cursor="pointer",
-        _hover={
-            "background": "rgba(102, 126, 234, 0.05)" if not is_active else "rgba(102, 126, 234, 0.1)",
-        },
+        href=href,
+        text_decoration="none",
         width="100%",
     )
 
 
-def sidebar() -> rx.Component:
+def sidebar(active_demo: str = "recipe") -> rx.Component:
     """
     Main sidebar component with demo navigation.
+    
+    Args:
+        active_demo: The currently active demo ("recipe" or "theme")
     
     Shows available demos that can be selected.
     """
@@ -81,24 +89,22 @@ def sidebar() -> rx.Component:
                     padding_bottom="0.5rem",
                 ),
                 
-                # Recipe Assistant (active)
+                # Recipe Assistant
                 demo_item(
                     title="Asistente de Recetas",
                     description="Crea y mejora recetas con IA",
                     icon="chef-hat",
-                    is_active=True,
+                    href="/",
+                    is_active=(active_demo == "recipe"),
                 ),
                 
-                # Page Personalizer (coming soon)
-                rx.box(
-                    demo_item(
-                        title="Personalizador de Página",
-                        description="Personaliza el tema con IA",
-                        icon="palette",
-                        is_active=False,
-                    ),
-                    opacity="0.5",
-                    cursor="not-allowed",
+                # Page Personalizer (Ilitia)
+                demo_item(
+                    title="Personalizador Ilitia",
+                    description="Personaliza el tema con IA",
+                    icon="palette",
+                    href="/theme",
+                    is_active=(active_demo == "theme"),
                 ),
                 
                 width="100%",

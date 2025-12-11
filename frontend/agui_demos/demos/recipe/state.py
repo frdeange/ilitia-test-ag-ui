@@ -13,7 +13,7 @@ import reflex as rx
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-from .ag_ui_client import AGUIClient, AGUIClientConfig, AGUIEventType
+from ...shared.ag_ui_client import AGUIClient, AGUIClientConfig, AGUIEventType
 
 # Load environment variables
 load_dotenv()

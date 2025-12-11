@@ -1,24 +1,14 @@
 """
-Reflex Configuration for Recipe App
+Reflex Configuration for AG-UI Demos
 """
 
 import os
 import reflex as rx
 
-# Detect if running in a forwarded port environment
-api_url = os.getenv("API_URL", "http://localhost:8000")
-
 config = rx.Config(
-    app_name="recipe_app",
-    title="🍳 Recetas Interactivas | AG-UI",
-    description="Genera recetas deliciosas con IA usando el protocolo AG-UI",
-    
-    # Frontend configuration
-    frontend_port=3000,
-    
-    # Backend configuration
-    backend_port=8000,
-    api_url=api_url,
+    app_name="agui_demos",
+    title="🚀 AG-UI Demos | Microsoft Agent Framework",
+    description="Demos interactivas del protocolo AG-UI con Microsoft Agent Framework",
     
     # Disable default plugins that are not explicitly configured
     disable_plugins=["reflex.plugins.sitemap.SitemapPlugin"],

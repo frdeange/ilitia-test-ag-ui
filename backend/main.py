@@ -1,7 +1,8 @@
 """
-FastAPI Backend for Recipe Agent with AG-UI Protocol
+FastAPI Backend for AG-UI Demos with Microsoft Agent Framework
 
 Uses Microsoft Agent Framework with AG-UI adapter for proper integration.
+Provides endpoints for Recipe and Theme agents.
 """
 
 import os
@@ -15,6 +16,7 @@ from agent_framework.ag_ui import add_agent_framework_fastapi_endpoint
 from agent_framework.openai import OpenAIChatClient
 
 from agents.recipe_agent import recipe_agent
+from agents.theme_agent import theme_agent
 
 # Load environment variables
 load_dotenv()
@@ -45,14 +47,16 @@ def get_chat_client():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler"""
-    print("🚀 Starting Recipe Agent Backend (Microsoft Agent Framework)...")
+    print("🚀 Starting AG-UI Demos Backend (Microsoft Agent Framework)...")
+    print("   📍 Recipe Agent: /shared_state")
+    print("   📍 Theme Agent:  /theme_state")
     yield
-    print("👋 Shutting down Recipe Agent Backend...")
+    print("👋 Shutting down AG-UI Demos Backend...")
 
 
 app = FastAPI(
-    title="Recipe Agent API",
-    description="Interactive recipe generation using Microsoft Agent Framework with AG-UI protocol",
+    title="AG-UI Demos API",
+    description="Interactive demos using Microsoft Agent Framework with AG-UI protocol",
     version="2.0.0",
     lifespan=lifespan,
 )
@@ -66,28 +70,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create chat client and register the AG-UI endpoint
+# Create chat client
 chat_client = get_chat_client()
-agent = recipe_agent(chat_client)
-add_agent_framework_fastapi_endpoint(app, agent, "/shared_state")
+
+# Register Recipe Agent endpoint
+recipe_ag = recipe_agent(chat_client)
+add_agent_framework_fastapi_endpoint(app, recipe_ag, "/shared_state")
+
+# Register Theme Agent endpoint
+theme_ag = theme_agent(chat_client)
+add_agent_framework_fastapi_endpoint(app, theme_ag, "/theme_state")
 
 
 @app.get("/health")
 async def health():
     """Health check endpoint"""
-    return {"status": "healthy", "service": "recipe-agent", "framework": "microsoft-agent-framework"}
+    return {"status": "healthy", "service": "agui-demos", "framework": "microsoft-agent-framework"}
 
 
 @app.get("/")
 async def root():
     """Root endpoint with API info"""
     return {
-        "name": "Recipe Agent API",
+        "name": "AG-UI Demos API",
         "version": "2.0.0",
         "framework": "Microsoft Agent Framework",
         "protocol": "AG-UI",
+        "agents": {
+            "recipe": "/shared_state - Recipe generation agent",
+            "theme": "/theme_state - Theme personalization agent",
+        },
         "endpoints": {
-            "shared_state": "/shared_state - AG-UI protocol endpoint (POST)",
             "health": "/health - Health check",
         },
     }
